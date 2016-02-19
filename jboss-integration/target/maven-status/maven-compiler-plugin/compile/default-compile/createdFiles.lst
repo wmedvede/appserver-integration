@@ -1,0 +1,3 @@
+org/kie/workbench/integration/DataSourceManager.class
+org/kie/workbench/integration/TestServlet.class
+org/kie/workbench/integration/JBossDataSource.class
