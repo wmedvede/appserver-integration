@@ -17,6 +17,9 @@
 package org.kie.workbench.integration;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +29,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jboss.dmr.ModelNode;
-
 @WebServlet( "/managerServlet" )
 public class TestServlet extends HttpServlet {
 
     private DataSourceManager dsManager = new DataSourceManager();
+
+    private DriverManager driverManager = new DriverManager();
+
+    private DeploymentManager deploymentManager = new DeploymentManager();
 
     @Override
     protected void doGet( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
@@ -57,12 +62,16 @@ public class TestServlet extends HttpServlet {
             String poolName = request.getParameter( "poolName" );
             boolean enabled = Boolean.TRUE.toString().equals( request.getParameter( "enabled" ) );
 
+            String deploymentName = request.getParameter( "deploymentName" );
+            String runtimeName = request.getParameter( "runtimeName" );
+            String contentPath = request.getParameter( "contentPath" );
+
             String operation = request.getParameter( "operation" );
             if ( "list".equals( operation ) ) {
                 printDataSouces( response );
             } else if ( "create".equals( operation ) ) {
                 dsManager.createDatasource( name, jndi, connectionURL, driverClass, datasourceClass, driverName,
-                        user, password, poolName, enabled );
+                        user, password, poolName, true, true );
             } else if ( "verify".equals( operation ) ) {
                 dsManager.verifyDataSource( jndi );
             } else if ( "enable".equals( operation ) ) {
@@ -70,7 +79,7 @@ public class TestServlet extends HttpServlet {
             } else if ( "delete".equals( operation ) ) {
                 dsManager.deleteDatasource( name );
             } else if ( "update".equals( operation ) ) {
-                Map<String, Object> changes = new HashMap<String, Object>(  );
+                Map<String, Object> changes = new HashMap<String, Object>();
 
                 changes.put( JBossDataSource.JNDI_NAME, jndi );
                 changes.put( JBossDataSource.CONNECTION_URL, connectionURL );
@@ -79,9 +88,12 @@ public class TestServlet extends HttpServlet {
                 changes.put( JBossDataSource.DRIVER_NAME, driverName );
                 changes.put( JBossDataSource.USER_NAME, user );
                 changes.put( JBossDataSource.PASSWORD, password );
-                changes.put( JBossDataSource.POOL_NAME, poolName );
-                dsManager.updateDatasource( name, changes );
 
+                dsManager.updateDatasource( name, changes );
+            } else if ( "deploy".equals( operation ) ) {
+                deploy( deploymentName, runtimeName, contentPath, enabled );
+            } else if( "listDrivers".equals( operation ) ) {
+                printDrivers( response );
             } else {
                 response.getWriter().println( " Unknown operation: " + operation );
             }
@@ -91,30 +103,30 @@ public class TestServlet extends HttpServlet {
         }
     }
 
-    private void printDataSouces( HttpServletResponse response ) throws Exception {
-        List<ModelNode> datasources = dsManager.getDataSources();
-        for ( ModelNode node : datasources ) {
-            response.getWriter().println( node.toString() );
+    private void deploy( String deploymentName, String runtimeName, String contentPath, boolean enabled ) throws Exception {
+
+        Path path = Paths.get( contentPath );
+        byte[] content = Files.readAllBytes( path );
+
+        deploymentManager.deployContent( deploymentName, runtimeName, content, enabled );
+    }
+
+    private void printDrivers( HttpServletResponse response ) throws Exception {
+        List<DriverDef> drivers = driverManager.getDrivers();
+        for ( DriverDef driverDef : drivers ) {
+            response.getWriter().println( driverDef.toString() );
         }
     }
 
-        /*
-
-    http://localhost:8080/jboss-integration-1.0-SNAPSHOT/Test?op=create&name=testds1&jndi=java:/comp/env/TestDS1&connectionURL=url&driverName=h2&driverClass=org.h2.Driver&driverName=driverName&user=test-user&password=test-password&poolName=the-pool-name
-
-    http://localhost:8080/jboss-integration-1.0-SNAPSHOT/Test?op=create&name=testds1&jndi=java:/comp/env/TestDS1&connectionURL=url&driverName=h2&driverClass=org.h2.Driver&user=test-user&password=test-password&poolName=the-pool-name
-
-
-    http://localhost:8080/jboss-integration-1.0-SNAPSHOT/Test?op=create&name=testds2&jndi=java:/comp/env/TestDS2&connectionURL=url&driverName=h2&driverClass=org.h2.Driver&user=test-user&password=test-password&poolName=the-pool-name2
-
-
-    http://localhost:8080/jboss-integration-1.0-SNAPSHOT/Test?op=create&name=testds3&jndi=java:/comp/env/TestDS3&connectionURL=url&driverClass=org.h2.Driver&user=test-user&password=test-password&poolName=the-pool-name3
+    private void printDataSouces( HttpServletResponse response ) throws Exception {
+        List<DataSourceDef> datasources = dsManager.getDataSources();
+        for ( DataSourceDef dataSourceDef : datasources ) {
+            response.getWriter().println( dataSourceDef.toString() );
+        }
+    }
 
 
 
-    org.h2.Driver
-
-    */
 
     //http://www.mastertheboss.com/jboss-server/jboss-as-7/using-jboss-management-api-programmatically#
 

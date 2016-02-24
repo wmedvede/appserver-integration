@@ -68,19 +68,37 @@
       <td>poolName:</td>
       <td><input type="text" name="poolName"></td>
     </tr>
+
+    <tr>
+      <td>deploymentName:</td>
+      <td><input type="text" name="deploymentName"></td>
+    </tr>
+
+    <tr>
+      <td>runtimeName:</td>
+      <td><input type="text" name="runtimeName"></td>
+    </tr>
+
+    <tr>
+      <td>contentPath:</td>
+      <td><input type="text" name="contentPath"></td>
+    </tr>
+
     <tr>
       <td>enabled</td>
       <td><input type="text" name="enabled"></td>
     </tr>
   </table>
 
-  <select name="operation">
-    <option value="create" >Create</option>
-    <option value="enable" >Enable</option>
-    <option value="update"/>Update</option>
-    <option value="delete"/>Delete</option>
-    <option value="verify"/>Verify</option>
-    <option value="list"/>List</option>
+  <select name="operation" >
+    <option value="create">Create</option>
+    <option value="enable">Enable</option>
+    <option value="update">Update</option>
+    <option value="delete">Delete</option>
+    <option value="verify">Verify</option>
+    <option value="list">List</option>
+    <option value="listDrivers">ListDrivers</option>
+    <option value="deploy">Deploy</option>
   </select>
 
   <input type="submit"/>
